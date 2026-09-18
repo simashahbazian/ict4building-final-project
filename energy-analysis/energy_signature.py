@@ -1,4 +1,4 @@
-
+"""
 Energy Signature & Prediction Analysis
 ======================================
 
@@ -24,6 +24,7 @@ Expected columns:
 - GHI
 - heating_kWh
 - cooling_kWh
+"""
 
 # =============================================================================
 # 1. Imports
@@ -48,7 +49,10 @@ from sklearn.preprocessing import MinMaxScaler
 # 2. Configuration
 # =============================================================================
 
-DATA_DIR = Path("data")
+# Resolve paths relative to this Python file.
+# This makes the script independent of the working directory.
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
 
 OLD_FILE = DATA_DIR / "energy_signature_old_with_ghi.csv"
 OPT_FILE = DATA_DIR / "energy_signature_opt_with_ghi.csv"
@@ -250,7 +254,7 @@ def calculate_energy_signature(
     ].copy()
 
     # -------------------------------------------------------------------------
-    # Cooling filtering used in the original daily/hourly analysis
+    # Cooling filtering used in the original analysis
     # -------------------------------------------------------------------------
 
     if filter_cooling_outliers:
@@ -660,9 +664,7 @@ def run_multivariate_cooling_analysis(
         "MULTIVARIATE COOLING ANALYSIS"
     )
 
-    print(
-        "=" * 70
-    )
+    print("=" * 70)
 
     print(
         f"Intercept: "
@@ -714,7 +716,7 @@ def run_multivariate_cooling_analysis(
     )
 
     ax.set_zlabel(
-        "Cooling Energy Consumption (kWh)"
+        "Cooling Energy (kWh)"
     )
 
     ax.set_title(
@@ -899,7 +901,7 @@ def create_multivariate_sequences(
     Create rolling sequences for the LSTM.
 
     The target is the observation immediately
-    following each 24-hour input window.
+    following each input window.
     """
 
     X = []
@@ -958,7 +960,8 @@ def run_lstm_analysis(
     Important:
     This follows the original project workflow, where the model is
     fitted and predictions are generated on the same sequences.
-    Therefore the reported MAE, MSE, and R² are in-sample metrics,
+
+    Therefore, the reported MAE, MSE, and R² are in-sample metrics,
     not test-set performance on unseen data.
     """
 
@@ -1000,12 +1003,6 @@ def run_lstm_analysis(
         window_size=window_size,
     )
 
-    if len(X) == 0:
-
-        raise ValueError(
-            "Not enough observations to create LSTM sequences."
-        )
-
     # -------------------------------------------------------------------------
     # Build model
     # -------------------------------------------------------------------------
@@ -1045,7 +1042,7 @@ def run_lstm_analysis(
     )
 
     # -------------------------------------------------------------------------
-    # Predict
+    # Prediction
     # -------------------------------------------------------------------------
 
     y_pred = model.predict(
@@ -1063,21 +1060,21 @@ def run_lstm_analysis(
         "heating_kWh"
     )
 
-    dummy_prediction = np.zeros(
+    dummy_pred = np.zeros(
         (
             len(y_pred),
             scaled.shape[1],
         )
     )
 
-    dummy_prediction[
+    dummy_pred[
         :,
         heating_index
     ] = y_pred[:, 0]
 
     y_pred_rescaled = (
         scaler.inverse_transform(
-            dummy_prediction
+            dummy_pred
         )[:, heating_index]
     )
 
@@ -1198,6 +1195,20 @@ def run_lstm_analysis(
 # =============================================================================
 
 if __name__ == "__main__":
+
+    # -------------------------------------------------------------------------
+    # Check input files
+    # -------------------------------------------------------------------------
+
+    if not OLD_FILE.exists():
+        raise FileNotFoundError(
+            f"Dataset not found: {OLD_FILE}"
+        )
+
+    if not OPT_FILE.exists():
+        raise FileNotFoundError(
+            f"Dataset not found: {OPT_FILE}"
+        )
 
     # -------------------------------------------------------------------------
     # Load datasets
