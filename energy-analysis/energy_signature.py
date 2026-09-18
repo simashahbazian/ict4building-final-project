@@ -1,4 +1,4 @@
-"""
+
 Energy Signature & Prediction Analysis
 ======================================
 
@@ -24,7 +24,6 @@ Expected columns:
 - GHI
 - heating_kWh
 - cooling_kWh
-"""
 
 # =============================================================================
 # 1. Imports
